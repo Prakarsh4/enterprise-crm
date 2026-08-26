@@ -1,0 +1,83 @@
+enterprise-crm/
+├── .env.example
+├── .gitignore
+├── README.md
+├── server/
+│   ├── config/
+│   │   └── db.js
+│   ├── models/
+│   │   ├── User.js
+│   │   ├── Lead.js
+│   │   ├── Customer.js
+│   │   ├── Deal.js
+│   │   └── Activity.js
+│   ├── middleware/
+│   │   ├── auth.js
+│   │   ├── errorHandler.js
+│   │   └── validateObjectId.js
+│   ├── controllers/
+│   │   ├── authController.js
+│   │   ├── leadController.js
+│   │   ├── customerController.js
+│   │   ├── dealController.js
+│   │   ├── activityController.js
+│   │   └── dashboardController.js
+│   ├── routes/
+│   │   ├── authRoutes.js
+│   │   ├── leadRoutes.js
+│   │   ├── customerRoutes.js
+│   │   ├── dealRoutes.js
+│   │   ├── activityRoutes.js
+│   │   └── dashboardRoutes.js
+│   ├── utils/
+│   │   ├── apiResponse.js
+│   │   └── seedData.js
+│   ├── server.js
+│   └── package.json
+└── client/
+    ├── index.html
+    ├── vite.config.js
+    ├── tailwind.config.js
+    ├── postcss.config.js
+    ├── package.json
+    └── src/
+        ├── index.css
+        ├── main.jsx
+        ├── App.jsx
+        ├── context/
+        │   ├── AuthContext.jsx
+        │   └── ToastContext.jsx
+        ├── services/
+        │   ├── api.js
+        │   ├── authService.js
+        │   ├── leadService.js
+        │   ├── customerService.js
+        │   ├── dealService.js
+        │   ├── activityService.js
+        │   └── dashboardService.js
+        ├── components/
+        │   ├── common/
+        │   │   ├── Button.jsx
+        │   │   ├── Input.jsx
+        │   │   ├── Select.jsx
+        │   │   ├── Modal.jsx
+        │   │   ├── Table.jsx
+        │   │   ├── Pagination.jsx
+        │   │   ├── Badge.jsx
+        │   │   ├── ConfirmModal.jsx
+        │   │   ├── EmptyState.jsx
+        │   │   ├── LoadingSpinner.jsx
+        │   │   └── Toast.jsx
+        │   └── layout/
+        │       ├── AppLayout.jsx
+        │       ├── Sidebar.jsx
+        │       └── Header.jsx
+        └── pages/
+            ├── Login.jsx
+            ├── Register.jsx
+            ├── Dashboard.jsx
+            ├── Leads.jsx
+            ├── Customers.jsx
+            ├── Deals.jsx
+            ├── Activities.jsx
+            └── Profile.jsx
