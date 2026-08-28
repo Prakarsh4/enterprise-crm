@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { leadService } from '../services/leadservice';
 import { authService } from '../services/authservice';
-import { useToast } from '../context/Toastcontext';
+import { useToast } from '../context/ToastContext';
 import Table from '../components/common/Table';
 import Pagination from '../components/common/Pagination';
 import Button from '../components/common/Button';

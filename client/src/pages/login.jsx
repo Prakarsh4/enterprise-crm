@@ -1,8 +1,8 @@
 // client/src/pages/Login.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/Authcontext';
-import { useToast } from '../context/Toastcontext';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
 

@@ -1,6 +1,6 @@
 // client/src/pages/Profile.jsx
 import React from 'react';
-import { useAuth } from '../context/Authcontext';
+import { useAuth } from '../context/AuthContext';
 import Badge from '../components/common/Badge';
 import { ShieldCheck, Mail, Calendar, User } from 'lucide-react';
 
