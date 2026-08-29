@@ -1,6 +1,6 @@
-const Deal = require('../models/Deal');
-const Lead = require('../models/Lead');
-const Customer = require('../models/Customer');
+const Deal = require('../Models/deal');
+const Lead = require('../Models/lead');
+const Customer = require('../Models/customer');
 const ApiResponse = require('../utils/apiResponse');
 
 exports.getReportSummary = async (req, res, next) => {
@@ -20,6 +20,17 @@ exports.getReportSummary = async (req, res, next) => {
     const leadsBySource = await Lead.aggregate([
       { $match: dateQuery },
       { $group: { _id: '$source', count: { $sum: 1 } } }
+    ]);
+    const dealsByStage = await Deal.aggregate([{ $match: dateQuery }, { $group: { _id: '$stage', count: { $sum: 1 }, value: { $sum: '$value' } } }]);
+    const monthlyRevenue = await Deal.aggregate([
+      { $match: { ...dateQuery, stage: 'closed_won' } },
+      { $group: { _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } }, revenue: { $sum: '$value' } } },
+      { $sort: { '_id.year': 1, '_id.month': 1 } }
+    ]);
+    const customerGrowth = await Customer.aggregate([
+      { $match: dateQuery },
+      { $group: { _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } }, count: { $sum: 1 } } },
+      { $sort: { '_id.year': 1, '_id.month': 1 } }
     ]);
 
     // Deal metrics
@@ -64,6 +75,9 @@ exports.getReportSummary = async (req, res, next) => {
         convertedLeads,
         conversionRate,
         leadsBySource,
+        dealsByStage,
+        monthlyRevenue,
+        customerGrowth,
         totalDeals,
         wonDealsCount: wonDeals.length,
         lostDealsCount: lostDeals.length,

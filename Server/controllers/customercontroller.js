@@ -1,5 +1,6 @@
 const Customer = require('../Models/customer');
 const ApiResponse = require('../utils/apiResponse');
+const logAudit = require('../utils/auditLogger');
 
 exports.getCustomers = async (req, res, next) => {
   try {
@@ -75,6 +76,7 @@ exports.createCustomer = async (req, res, next) => {
     });
 
     const populated = await Customer.findById(customer._id).populate('assignedTo', 'name email role');
+    await logAudit({ actorId: req.user._id, action: 'CUSTOMER_CREATE', entityType: 'Customer', entityId: customer._id, description: `Created customer ${customer.name}` });
     return ApiResponse.success(res, populated, 'Customer created successfully', 201);
   } catch (error) {
     next(error);
@@ -92,6 +94,7 @@ exports.updateCustomer = async (req, res, next) => {
       new: true,
       runValidators: true
     }).populate('assignedTo', 'name email role');
+    await logAudit({ actorId: req.user._id, action: 'CUSTOMER_UPDATE', entityType: 'Customer', entityId: customer._id, description: `Updated customer ${customer.name}` });
 
     return ApiResponse.success(res, customer, 'Customer updated successfully', 200);
   } catch (error) {
@@ -107,6 +110,7 @@ exports.deleteCustomer = async (req, res, next) => {
     }
 
     await Customer.findByIdAndDelete(req.params.id);
+    await logAudit({ actorId: req.user._id, action: 'CUSTOMER_DELETE', entityType: 'Customer', entityId: customer._id, description: `Deleted customer ${customer.name}` });
     return ApiResponse.success(res, null, 'Customer deleted successfully', 200);
   } catch (error) {
     next(error);

@@ -1,5 +1,7 @@
 const Deal = require('../Models/deal');
 const ApiResponse = require('../utils/apiResponse');
+const logAudit = require('../utils/auditLogger');
+const createNotification = require('../utils/notificationService');
 
 exports.getDeals = async (req, res, next) => {
   try {
@@ -62,6 +64,7 @@ exports.createDeal = async (req, res, next) => {
     const populated = await Deal.findById(deal._id)
       .populate('customer', 'name company email')
       .populate('assignedTo', 'name email role');
+    await logAudit({ actorId: req.user._id, action: 'DEAL_CREATE', entityType: 'Deal', entityId: deal._id, description: `Created deal ${deal.title}` });
 
     return ApiResponse.success(res, populated, 'Deal created successfully', 201);
   } catch (error) {
@@ -76,6 +79,7 @@ exports.updateDeal = async (req, res, next) => {
       return ApiResponse.error(res, 'Deal not found', 404);
     }
 
+    const stageChanged = req.body.stage && deal.stage !== req.body.stage;
     deal = await Deal.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true
@@ -83,6 +87,8 @@ exports.updateDeal = async (req, res, next) => {
       .populate('customer', 'name company email')
       .populate('assignedTo', 'name email role');
 
+    await logAudit({ actorId: req.user._id, action: stageChanged ? 'DEAL_STAGE_CHANGE' : 'DEAL_UPDATE', entityType: 'Deal', entityId: deal._id, description: `${stageChanged ? `Changed ${deal.title} to ${deal.stage}` : `Updated deal ${deal.title}`}` });
+    if (stageChanged && deal.assignedTo) await createNotification({ recipient: deal.assignedTo._id || deal.assignedTo, type: 'DEAL_STAGE_CHANGED', title: `Deal moved to ${deal.stage}`, message: `${deal.title} is now ${deal.stage.replace('_', ' ')}.`, relatedEntity: { entityType: 'Deal', entityId: deal._id } });
     return ApiResponse.success(res, deal, 'Deal updated successfully', 200);
   } catch (error) {
     next(error);
@@ -97,6 +103,7 @@ exports.deleteDeal = async (req, res, next) => {
     }
 
     await Deal.findByIdAndDelete(req.params.id);
+    await logAudit({ actorId: req.user._id, action: 'DEAL_DELETE', entityType: 'Deal', entityId: deal._id, description: `Deleted deal ${deal.title}` });
     return ApiResponse.success(res, null, 'Deal deleted successfully', 200);
   } catch (error) {
     next(error);

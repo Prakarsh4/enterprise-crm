@@ -1,5 +1,23 @@
 const rateLimitMap = new Map();
 
+const sanitizeNoSql = (value) => {
+  if (Array.isArray(value)) return value.map(sanitizeNoSql);
+  if (value && typeof value === 'object') {
+    Object.keys(value).forEach((key) => {
+      if (key.startsWith('$') || key.includes('.')) delete value[key];
+      else value[key] = sanitizeNoSql(value[key]);
+    });
+  }
+  return value;
+};
+
+const preventNoSqlInjection = (req, res, next) => {
+  if (req.body) sanitizeNoSql(req.body);
+  if (req.query) sanitizeNoSql(req.query);
+  if (req.params) sanitizeNoSql(req.params);
+  next();
+};
+
 // Lightweight in-memory rate limiter
 const rateLimiter = ({ windowMs = 15 * 60 * 1000, max = 10, message = 'Too many requests, please try again later.' }) => {
   return (req, res, next) => {
@@ -36,4 +54,4 @@ const securityHeaders = (req, res, next) => {
   next();
 };
 
-module.exports = { rateLimiter, securityHeaders };
+module.exports = { rateLimiter, securityHeaders, preventNoSqlInjection };

@@ -5,6 +5,8 @@ const Lead = require('../Models/lead');
 const Customer = require('../Models/customer');
 const Deal = require('../Models/deal');
 const Activity = require('../Models/activity');
+const AuditLog = require('../Models/AuditLog');
+const Notification = require('../Models/Notification');
 
 dotenv.config({ path: '../.env' });
 
@@ -19,6 +21,8 @@ const seedDatabase = async () => {
     await Customer.deleteMany({});
     await Deal.deleteMany({});
     await Activity.deleteMany({});
+    await AuditLog.deleteMany({});
+    await Notification.deleteMany({});
     console.log('[Seed] Cleared existing records.');
 
     // 1. Create Users
@@ -212,6 +216,17 @@ const seedDatabase = async () => {
     ]);
 
     console.log('[Seed] Created activities');
+    await Notification.create([
+      { recipient: salesRep1._id, type: 'LEAD_ASSIGNED', title: 'New lead assigned', message: 'John Doe was assigned to you.' },
+      { recipient: salesRep2._id, type: 'DEAL_STAGE_CHANGED', title: 'Deal moved to negotiation', message: 'Apex Fintech Security Suite Integration needs attention.' },
+      { recipient: managerUser._id, type: 'SYSTEM_ALERT', title: 'Pipeline review', message: 'Weekly pipeline review is ready.' }
+    ]);
+    await AuditLog.create([
+      { actor: adminUser._id, action: 'USER_REGISTER', entityType: 'Auth', description: 'Seeded administrator account' },
+      { actor: managerUser._id, action: 'LEAD_CONVERT', entityType: 'Lead', description: 'Converted seeded lead Diana Prince' },
+      { actor: salesRep2._id, action: 'DEAL_STAGE_CHANGE', entityType: 'Deal', entityId: deal2._id, description: 'Moved Apex deal to negotiation' }
+    ]);
+    console.log('[Seed] Created notifications and audit logs');
     console.log('[Seed] Database seeding completed successfully.');
     process.exit(0);
   } catch (error) {

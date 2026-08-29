@@ -1,5 +1,7 @@
 const Lead = require('../Models/lead');
 const ApiResponse = require('../utils/apiResponse');
+const logAudit = require('../utils/auditLogger');
+const createNotification = require('../utils/notificationService');
 
 exports.getLeads = async (req, res, next) => {
   try {
@@ -91,6 +93,8 @@ exports.createLead = async (req, res, next) => {
     });
 
     const populatedLead = await Lead.findById(lead._id).populate('assignedTo', 'name email role');
+    await logAudit({ actorId: req.user._id, action: 'LEAD_CREATE', entityType: 'Lead', entityId: lead._id, description: `Created lead ${lead.firstName} ${lead.lastName}` });
+    if (assignedTo && assignedTo !== req.user._id.toString()) await createNotification({ recipient: assignedTo, type: 'LEAD_ASSIGNED', title: 'New lead assigned', message: `${lead.firstName} ${lead.lastName} was assigned to you.`, relatedEntity: { entityType: 'Lead', entityId: lead._id } });
     return ApiResponse.success(res, populatedLead, 'Lead created successfully', 201);
   } catch (error) {
     next(error);
@@ -104,11 +108,14 @@ exports.updateLead = async (req, res, next) => {
       return ApiResponse.error(res, 'Lead not found', 404);
     }
 
+    const wasConverted = lead.status !== 'converted' && req.body.status === 'converted';
     lead = await Lead.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true
     }).populate('assignedTo', 'name email role');
 
+    await logAudit({ actorId: req.user._id, action: wasConverted ? 'LEAD_CONVERT' : 'LEAD_UPDATE', entityType: 'Lead', entityId: lead._id, description: `${wasConverted ? 'Converted' : 'Updated'} lead ${lead.firstName} ${lead.lastName}` });
+    if (wasConverted && lead.assignedTo) await createNotification({ recipient: lead.assignedTo._id || lead.assignedTo, type: 'LEAD_CONVERTED', title: 'Lead converted', message: `${lead.firstName} ${lead.lastName} was converted.`, relatedEntity: { entityType: 'Lead', entityId: lead._id } });
     return ApiResponse.success(res, lead, 'Lead updated successfully', 200);
   } catch (error) {
     next(error);
@@ -123,6 +130,7 @@ exports.deleteLead = async (req, res, next) => {
     }
 
     await Lead.findByIdAndDelete(req.params.id);
+    await logAudit({ actorId: req.user._id, action: 'LEAD_DELETE', entityType: 'Lead', entityId: lead._id, description: `Deleted lead ${lead.firstName} ${lead.lastName}` });
     return ApiResponse.success(res, null, 'Lead deleted successfully', 200);
   } catch (error) {
     next(error);

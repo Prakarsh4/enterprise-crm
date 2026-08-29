@@ -1,6 +1,7 @@
 const User = require('../Models/user');
 const jwt = require('jsonwebtoken');
 const ApiResponse = require('../utils/apiResponse');
+const logAudit = require('../utils/auditLogger');
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'super_secret_jwt_key_crm_phase1_change_in_prod', {
@@ -30,6 +31,7 @@ exports.register = async (req, res, next) => {
       password,
       role: safeRole
     });
+    await logAudit({ actorId: user._id, action: 'USER_REGISTER', entityType: 'Auth', description: `Registered ${user.email}` });
 
     const token = generateToken(user._id);
 
@@ -60,6 +62,9 @@ exports.login = async (req, res, next) => {
     if (!user) {
       return ApiResponse.error(res, 'Invalid email or password', 401);
     }
+    if (user.isActive === false) {
+      return ApiResponse.error(res, 'This account has been deactivated', 403);
+    }
 
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
@@ -67,6 +72,7 @@ exports.login = async (req, res, next) => {
     }
 
     const token = generateToken(user._id);
+    await logAudit({ actorId: user._id, action: 'USER_LOGIN', entityType: 'Auth', description: `Logged in as ${user.email}` });
 
     const userResponse = {
       _id: user._id,

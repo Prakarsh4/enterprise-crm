@@ -16,7 +16,7 @@ const authenticate = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'super_secret_jwt_key_crm_phase1_change_in_prod');
     const user = await User.findById(decoded.id).select('-password');
-    if (!user) {
+    if (!user || user.isActive === false) {
       return ApiResponse.error(res, 'User belonging to this token no longer exists', 401);
     }
     req.user = user;

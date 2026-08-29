@@ -1,4 +1,4 @@
-const User = require('../models/User');
+const User = require('../Models/user');
 const ApiResponse = require('../utils/apiResponse');
 const logAudit = require('../utils/auditLogger');
 
@@ -24,6 +24,9 @@ exports.updateUserRole = async (req, res, next) => {
       return ApiResponse.error(res, 'You cannot remove your own admin access', 400);
     }
 
+    const targetUser = await User.findById(targetUserId);
+    if (!targetUser) return ApiResponse.error(res, 'User not found', 404);
+    if (targetUser.role === 'admin' && role !== 'admin' && targetUser.isActive !== false && await User.countDocuments({ role: 'admin', isActive: { $ne: false } }) <= 1) return ApiResponse.error(res, 'Cannot demote the last active admin', 400);
     const updatedUser = await User.findByIdAndUpdate(targetUserId, { role }, { new: true }).select('-password');
     if (!updatedUser) {
       return ApiResponse.error(res, 'User not found', 404);
@@ -52,7 +55,10 @@ exports.toggleUserStatus = async (req, res, next) => {
       return ApiResponse.error(res, 'You cannot deactivate your own account', 400);
     }
 
-    const updatedUser = await User.findByIdAndUpdate(targetUserId, { isActive }, { new: true }).select('-password');
+    const targetUser = await User.findById(targetUserId);
+    if (!targetUser) return ApiResponse.error(res, 'User not found', 404);
+    if (targetUser.role === 'admin' && targetUser.isActive !== false && isActive === false && await User.countDocuments({ role: 'admin', isActive: { $ne: false } }) <= 1) return ApiResponse.error(res, 'Cannot deactivate the last active admin', 400);
+    const updatedUser = await User.findByIdAndUpdate(targetUserId, { isActive: Boolean(isActive) }, { new: true }).select('-password');
     if (!updatedUser) {
       return ApiResponse.error(res, 'User not found', 404);
     }

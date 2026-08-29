@@ -1,5 +1,6 @@
 const Activity = require('../Models/activity');
 const ApiResponse = require('../utils/apiResponse');
+const logAudit = require('../utils/auditLogger');
 
 exports.getActivities = async (req, res, next) => {
   try {
@@ -51,6 +52,7 @@ exports.createActivity = async (req, res, next) => {
       .populate('relatedLead', 'firstName lastName email')
       .populate('relatedCustomer', 'name company email')
       .populate('relatedDeal', 'title value');
+    await logAudit({ actorId: req.user._id, action: 'ACTIVITY_CREATE', entityType: 'Activity', entityId: activity._id, description: `Created activity ${activity.title}` });
 
     return ApiResponse.success(res, populated, 'Activity created successfully', 201);
   } catch (error) {
@@ -73,6 +75,7 @@ exports.updateActivity = async (req, res, next) => {
       .populate('relatedLead', 'firstName lastName email')
       .populate('relatedCustomer', 'name company email')
       .populate('relatedDeal', 'title value');
+    await logAudit({ actorId: req.user._id, action: 'ACTIVITY_UPDATE', entityType: 'Activity', entityId: activity._id, description: `Updated activity ${activity.title}` });
 
     return ApiResponse.success(res, activity, 'Activity updated successfully', 200);
   } catch (error) {
@@ -88,6 +91,7 @@ exports.deleteActivity = async (req, res, next) => {
     }
 
     await Activity.findByIdAndDelete(req.params.id);
+    await logAudit({ actorId: req.user._id, action: 'ACTIVITY_DELETE', entityType: 'Activity', entityId: activity._id, description: `Deleted activity ${activity.title}` });
     return ApiResponse.success(res, null, 'Activity deleted successfully', 200);
   } catch (error) {
     next(error);
